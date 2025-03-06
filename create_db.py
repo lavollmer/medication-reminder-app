@@ -23,5 +23,8 @@ CREATE TABLE IF NOT EXISTS reminders (
 );
 ''')
 
+# commits the current transaction - commiting changes
 conn.commit()
+
+# closing the connection to the database
 conn.close()
