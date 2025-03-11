@@ -53,3 +53,52 @@ def login():
         )
         return jsonify({"token": token}), 200
     return jsonify({"message": "Invalid credentials!"}), 401
+
+@app.route('/reminders', methods=['POST'])
+def add_reminder():
+    data = request.get_json()
+    token = request.headers.get('Authorization').split()[1]  # Extract token from Authorization header
+
+    try:
+        decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+        user_id = decoded_token['user_id']
+    except jwt.ExpiredSignatureError:
+        return jsonify({"message": "Token has expired!"}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"message": "Invalid token!"}), 401
+
+    medication_name = data['medication_name']
+    dosage = data['dosage']
+    time = data['time']
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO reminders (medication_name, dosage, time, user_id) VALUES (?, ?, ?, ?)",
+                   (medication_name, dosage, time, user_id))
+    conn.commit()
+
+    return jsonify({"message": "Reminder added!"}), 201
+
+@app.route('/reminders', methods=['GET'])
+def get_reminders():
+    token = request.headers.get('Authorization').split()[1]
+
+    try:
+        decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+        user_id = decoded_token['user_id']
+    except jwt.ExpiredSignatureError:
+        return jsonify({"message": "Token has expired!"}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"message": "Invalid token!"}), 401
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM reminders WHERE user_id=?", (user_id,))
+    reminders = cursor.fetchall()
+
+    reminders_list = [{"medication_name": r[1], "dosage": r[2], "time": r[3]} for r in reminders]
+
+    return jsonify(reminders_list), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)
