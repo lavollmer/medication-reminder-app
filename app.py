@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
 
-app = Flask(_name_)
+app = Flask(__name__)
 app.config["SECRET_KEY"] = ""
 
 
@@ -99,6 +99,10 @@ def get_reminders():
     reminders_list = [{"medication_name": r[1], "dosage": r[2], "time": r[3]} for r in reminders]
 
     return jsonify(reminders_list), 200
+
+@app.route('/')
+def home():
+    return "hello world"
 
 if __name__ == '__main__':
     app.run(debug=True)
